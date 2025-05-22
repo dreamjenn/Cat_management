@@ -38,8 +38,27 @@ app.use(cors());
 app.use(express.json());
 app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
-// 初始化数据库
-initializeDatabase(dbPath);
+// 初始化数据库并启动服务器
+const startServer = async () => {
+  try {
+    await initializeDatabase(dbPath);
+    
+    app.listen(PORT, '0.0.0.0', () => {
+      console.log(`服务器运行在端口 ${PORT}`);
+      console.log(`环境: ${process.env.NODE_ENV || 'development'}`);
+      console.log(`数据库路径: ${dbPath}`);
+      console.log(`上传目录: ${uploadDir}`);
+    }).on('error', (err) => {
+      console.error('服务器启动失败:', err);
+      process.exit(1);
+    });
+  } catch (error) {
+    console.error('服务器初始化失败:', error);
+    process.exit(1);
+  }
+};
+
+startServer();
 
 // API 路由
 app.get('/api/cats', async (req, res) => {
@@ -97,15 +116,4 @@ app.delete('/api/cats/:id', async (req, res) => {
 app.use((err, req, res, next) => {
   console.error('服务器错误:', err);
   res.status(500).json({ error: '服务器内部错误' });
-});
-
-// 启动服务器
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`服务器运行在端口 ${PORT}`);
-  console.log(`环境: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`数据库路径: ${dbPath}`);
-  console.log(`上传目录: ${uploadDir}`);
-}).on('error', (err) => {
-  console.error('服务器启动失败:', err);
-  process.exit(1);
 }); 

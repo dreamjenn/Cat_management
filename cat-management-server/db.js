@@ -6,41 +6,51 @@ const fs = require('fs');
 let db = null;
 
 const initializeDatabase = (dbPath) => {
-  // 确保数据目录存在
-  const dataDir = path.dirname(dbPath);
-  if (!fs.existsSync(dataDir)) {
-    fs.mkdirSync(dataDir, { recursive: true });
-  }
+  return new Promise((resolve, reject) => {
+    try {
+      // 确保数据目录存在
+      const dataDir = path.dirname(dbPath);
+      if (!fs.existsSync(dataDir)) {
+        fs.mkdirSync(dataDir, { recursive: true });
+      }
 
-  db = new sqlite3.Database(dbPath, (err) => {
-    if (err) {
-      console.error('数据库连接失败:', err);
-      throw err;
-    }
-    console.log('成功连接到数据库:', dbPath);
-  });
+      db = new sqlite3.Database(dbPath, (err) => {
+        if (err) {
+          console.error('数据库连接失败:', err);
+          reject(err);
+          return;
+        }
+        console.log('成功连接到数据库:', dbPath);
 
-  // 初始化数据库表
-  db.run(`
-    CREATE TABLE IF NOT EXISTS cats (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      name TEXT NOT NULL,
-      gender TEXT NOT NULL,
-      age TEXT,
-      color TEXT,
-      location TEXT NOT NULL,
-      health TEXT NOT NULL,
-      neutered INTEGER NOT NULL,
-      description TEXT,
-      image_url TEXT,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    )
-  `, (err) => {
-    if (err) {
-      console.error('创建表失败:', err);
-      throw err;
+        // 初始化数据库表
+        db.run(`
+          CREATE TABLE IF NOT EXISTS cats (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            gender TEXT NOT NULL,
+            age TEXT,
+            color TEXT,
+            location TEXT NOT NULL,
+            health TEXT NOT NULL,
+            neutered INTEGER NOT NULL,
+            description TEXT,
+            image_url TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+          )
+        `, (err) => {
+          if (err) {
+            console.error('创建表失败:', err);
+            reject(err);
+            return;
+          }
+          console.log('数据库表初始化成功');
+          resolve();
+        });
+      });
+    } catch (error) {
+      console.error('数据库初始化失败:', error);
+      reject(error);
     }
-    console.log('数据库表初始化成功');
   });
 };
 
