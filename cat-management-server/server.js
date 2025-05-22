@@ -89,6 +89,14 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: '服务器内部错误' });
 });
 
-app.listen(port, () => {
-  console.log(`服务器运行在端口 ${port}`);
+// 启动服务器
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`服务器运行在端口 ${PORT}`);
+  console.log(`环境: ${process.env.NODE_ENV}`);
+  console.log(`数据库路径: ${dbPath}`);
+  console.log(`上传目录: ${uploadDir}`);
+}).on('error', (err) => {
+  console.error('服务器启动失败:', err);
+  process.exit(1);
 }); 
