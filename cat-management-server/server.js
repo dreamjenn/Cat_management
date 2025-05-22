@@ -2,18 +2,28 @@ const express = require('express');
 const cors = require('cors');
 const multer = require('multer');
 const path = require('path');
+const fs = require('fs');
 const { initializeDatabase, getAllCats, addCat, updateCat, deleteCat } = require('./db');
 
 const app = express();
-const port = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5000;
+
+// 定义必要的路径
+const uploadDir = path.join(process.cwd(), 'uploads');
+const dataDir = path.join(process.cwd(), 'data');
+const dbPath = path.join(dataDir, 'cats.db');
+
+// 确保必要的目录存在
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+if (!fs.existsSync(dataDir)) {
+  fs.mkdirSync(dataDir, { recursive: true });
+}
 
 // 配置文件上传
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const uploadDir = path.join(process.cwd(), 'uploads');
-    if (!require('fs').existsSync(uploadDir)) {
-      require('fs').mkdirSync(uploadDir, { recursive: true });
-    }
     cb(null, uploadDir);
   },
   filename: (req, file, cb) => {
@@ -29,7 +39,7 @@ app.use(express.json());
 app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
 // 初始化数据库
-initializeDatabase();
+initializeDatabase(dbPath);
 
 // API 路由
 app.get('/api/cats', async (req, res) => {
@@ -90,10 +100,9 @@ app.use((err, req, res, next) => {
 });
 
 // 启动服务器
-const PORT = process.env.PORT || 5000;
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`服务器运行在端口 ${PORT}`);
-  console.log(`环境: ${process.env.NODE_ENV}`);
+  console.log(`环境: ${process.env.NODE_ENV || 'development'}`);
   console.log(`数据库路径: ${dbPath}`);
   console.log(`上传目录: ${uploadDir}`);
 }).on('error', (err) => {

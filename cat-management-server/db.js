@@ -1,28 +1,26 @@
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
-
-// 根据环境选择数据库文件路径
-const dbPath = process.env.NODE_ENV === 'production' 
-  ? path.join(process.cwd(), 'data', 'cats.db')
-  : path.join(__dirname, 'cats.db');
-
-// 确保数据目录存在
 const fs = require('fs');
-const dataDir = path.join(process.cwd(), 'data');
-if (!fs.existsSync(dataDir)) {
-  fs.mkdirSync(dataDir, { recursive: true });
-}
 
-const db = new sqlite3.Database(dbPath, (err) => {
-  if (err) {
-    console.error('数据库连接失败:', err);
-  } else {
-    console.log('成功连接到数据库');
+// 数据库配置
+let db = null;
+
+const initializeDatabase = (dbPath) => {
+  // 确保数据目录存在
+  const dataDir = path.dirname(dbPath);
+  if (!fs.existsSync(dataDir)) {
+    fs.mkdirSync(dataDir, { recursive: true });
   }
-});
 
-// 初始化数据库表
-const initializeDatabase = () => {
+  db = new sqlite3.Database(dbPath, (err) => {
+    if (err) {
+      console.error('数据库连接失败:', err);
+      throw err;
+    }
+    console.log('成功连接到数据库:', dbPath);
+  });
+
+  // 初始化数据库表
   db.run(`
     CREATE TABLE IF NOT EXISTS cats (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -40,9 +38,9 @@ const initializeDatabase = () => {
   `, (err) => {
     if (err) {
       console.error('创建表失败:', err);
-    } else {
-      console.log('数据库表初始化成功');
+      throw err;
     }
+    console.log('数据库表初始化成功');
   });
 };
 
